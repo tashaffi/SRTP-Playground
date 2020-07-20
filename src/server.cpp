@@ -6,6 +6,7 @@
 #include <jrtplib3/rtppacket.h>
 #include <stdlib.h>
 #include <iostream>
+#include "audio.h"
 
 using namespace jrtplib;
 
@@ -45,17 +46,26 @@ int main(void)
 	session.SetDefaultMark(false);
 	session.SetDefaultTimestampIncrement(160);
 	
+    //Deadcode, keeping it for debugging purposes, will remove later
 	uint8_t silencebuffer[160];
 	for (int i = 0 ; i < 160 ; i++)
 		silencebuffer[i] = 128;
 
+    WavData song;
+    //TODO
+    //Bad practice, hardcoded filename, will fix later
+    loadWaveFile("/Users/tashaffi/Documents/office work data/SRTP project/src/audio.wav", &song);
+
 	RTPTime delay(0.020);
+    
 	RTPTime starttime = RTPTime::CurrentTime();
-	
-	bool done = false;
-	while (!done)
+
+    int count = 0;
+	while (count <= song.getSampleCount())
 	{
-		status = session.SendPacket(silencebuffer,160);
+        //TODO
+        //sends one interger at a time, but packets can hold more, send more data with one packet
+		status = session.SendPacket(&song.getData()[count], sizeof(song.getData()[count]));
 		if (status < 0)
 		{
 			std::cerr << RTPGetErrorString(status) << std::endl;
@@ -83,11 +93,8 @@ int main(void)
 		session.EndDataAccess();
 			
 		RTPTime::Wait(delay);
-		
-		RTPTime t = RTPTime::CurrentTime();
-		t -= starttime;
-		if (t > RTPTime(60.0))
-			done = true;
+    
+		count ++;
 	}
 	
 	delay = RTPTime(10.0);
